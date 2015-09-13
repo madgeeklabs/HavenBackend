@@ -7,9 +7,9 @@ var bodyParser = require('body-parser');
 var braintree = require("braintree");
 var gateway = braintree.connect({
     environment:  braintree.Environment.Sandbox,
-    merchantId:   'hdvw3ktdqkmdk4mr',
-    publicKey:    '2795bdyfcbp3gv83',
-    privateKey:   'c39d86e4c0646ae19075a298e87bad7c'
+    merchantId:   'r9tpr7tdrnqxtfjn',
+    publicKey:    'wjh8jm6dxnp2254m',
+    privateKey:   '5cdb18e2e2cd4db2727989c269523027'
 });
 
 var url = 'mongodb://localhost:27017/haven';
@@ -26,6 +26,16 @@ MongoClient.connect(url, function(err, db) {
 	app.use(bodyParser.urlencoded());
 	app.use(cookieParser());
 
+    var allowCrossDomain = function(req, res, next) {
+        res.header('Access-Control-Allow-Credentials', true);
+        res.header('Access-Control-Allow-Origin', req.headers.origin);
+        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Origin, Accept');
+        next();
+    };
+
+    app.use(allowCrossDomain);
+
     app.get("/hi", function (req, res) {
     	res.send('hola hola');
     });
@@ -34,12 +44,12 @@ MongoClient.connect(url, function(err, db) {
 	app.get("/payments/client_token", function (req, res) {
 	  gateway.clientToken.generate({}, function (err, response) {
 	    //console.log('token requested ' + response.clientToken, typeof(response.clientToken));
-	    res.send({accessToken: response.clientToken});
+            res.send(response.clientToken);
 	  });
 	});
 
 	app.post("/payments/payment-methods", function (req, res) {
-		var nonce = req.body.nonce;
+                  var nonce = req.body.payment_method_nonce;
 
 		console.log('processing payment');
 		console.log('-------------------');
@@ -56,7 +66,8 @@ MongoClient.connect(url, function(err, db) {
 	          res.sendStatus(500);
 	          console.log(result);
 	        } else {
-	          res.sendStatus(200);
+                    res.redirect('http://192.168.1.45:3000/thankyou.html');
+
 	          console.log('transaction OK');
 	        }
 	    });
